@@ -62,16 +62,18 @@ function RoleButton({
   icon,
   label,
   hint,
+  role,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   hint: string;
+  role: "patient" | "pharmacy";
 }) {
   return (
     <Link
       to={to}
-      search={{ mode: "signup" }}
+      search={{ mode: "signup", role }}
       className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lift"
     >
       <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
