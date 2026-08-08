@@ -41,16 +41,33 @@ function AuthPage() {
   const [role, setRole] = useState<Role>(initialRole);
   const [loading, setLoading] = useState(false);
 
+  const redirectByRole = async (userId: string | undefined) => {
+    if (!userId) {
+      await navigate({ to: "/" });
+      return;
+    }
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+    if (profile?.role === "pharmacy") {
+      await navigate({ to: "/pharmacy/dashboard" });
+    } else {
+      await navigate({ to: "/" });
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back to MediStock AI");
-        await navigate({ to: "/" });
+        await redirectByRole(data.user?.id);
         return;
       }
 
@@ -66,7 +83,7 @@ function AuthPage() {
 
       if (data.session) {
         toast.success("Account created");
-        await navigate({ to: "/" });
+        await redirectByRole(data.user?.id);
       } else {
         toast.success("Check your email to confirm your account");
       }
