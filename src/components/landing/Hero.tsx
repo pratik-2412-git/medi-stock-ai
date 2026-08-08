@@ -28,12 +28,14 @@ export function Hero() {
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <RoleButton
               to="/auth"
+              role="patient"
               icon={<User className="size-5" />}
               label="I'm a Patient"
               hint="Find medicines nearby"
             />
             <RoleButton
               to="/auth"
+              role="pharmacy"
               icon={<Building2 className="size-5" />}
               label="I'm a Pharmacy Owner"
               hint="Update stock, get alerts"
