@@ -6,7 +6,7 @@ const description =
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
-    mode: search.mode === "login" ? ("login" as const) : ("signup" as const),
+    mode: search["mode"] === "login" ? ("login" as const) : ("signup" as const),
   }),
   head: () => ({
     meta: [
