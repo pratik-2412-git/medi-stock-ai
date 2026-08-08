@@ -14,13 +14,308 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_read: boolean
+          medicine_id: string | null
+          message: string | null
+          pharmacy_id: string
+          severity: string
+          title: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          medicine_id?: string | null
+          message?: string | null
+          pharmacy_id: string
+          severity?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          medicine_id?: string | null
+          message?: string | null
+          pharmacy_id?: string
+          severity?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medicines: {
+        Row: {
+          category: string | null
+          composition: string | null
+          created_at: string
+          dosage: string | null
+          id: string
+          manufacturer: string | null
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          composition?: string | null
+          created_at?: string
+          dosage?: string | null
+          id?: string
+          manufacturer?: string | null
+          name: string
+        }
+        Update: {
+          category?: string | null
+          composition?: string | null
+          created_at?: string
+          dosage?: string | null
+          id?: string
+          manufacturer?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      pharmacies: {
+        Row: {
+          address: string | null
+          city: string | null
+          closing_time: string | null
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          opening_time: string | null
+          owner_name: string | null
+          pharmacy_type: string | null
+          phone: string | null
+          pincode: string | null
+          state: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          closing_time?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          opening_time?: string | null
+          owner_name?: string | null
+          pharmacy_type?: string | null
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          closing_time?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          opening_time?: string | null
+          owner_name?: string | null
+          pharmacy_type?: string | null
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+        }
+        Relationships: []
+      }
+      predictions: {
+        Row: {
+          id: string
+          medicine_id: string
+          message: string | null
+          pharmacy_id: string
+          predicted_days: number | null
+          prediction_date: string
+          probability: number | null
+          shortage_class: string
+        }
+        Insert: {
+          id?: string
+          medicine_id: string
+          message?: string | null
+          pharmacy_id: string
+          predicted_days?: number | null
+          prediction_date?: string
+          probability?: number | null
+          shortage_class?: string
+        }
+        Update: {
+          id?: string
+          medicine_id?: string
+          message?: string | null
+          pharmacy_id?: string
+          predicted_days?: number | null
+          prediction_date?: string
+          probability?: number | null
+          shortage_class?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "predictions_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          pharmacy_id: string | null
+          phone: string | null
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          pharmacy_id?: string | null
+          phone?: string | null
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          pharmacy_id?: string | null
+          phone?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          id: string
+          medicine_id: string
+          pharmacy_id: string
+          quantity_sold: number
+          sale_date: string
+        }
+        Insert: {
+          id?: string
+          medicine_id: string
+          pharmacy_id: string
+          quantity_sold?: number
+          sale_date?: string
+        }
+        Update: {
+          id?: string
+          medicine_id?: string
+          pharmacy_id?: string
+          quantity_sold?: number
+          sale_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock: {
+        Row: {
+          id: string
+          medicine_id: string
+          pharmacy_id: string
+          quantity: number
+          reorder_level: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          medicine_id: string
+          pharmacy_id: string
+          quantity?: number
+          reorder_level?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          medicine_id?: string
+          pharmacy_id?: string
+          quantity?: number
+          reorder_level?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      owns_pharmacy: { Args: { _pharmacy_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
