@@ -1,4 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+
+import { useAuth } from "@/hooks/use-auth";
 import { Footer } from "@/components/landing/Footer";
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
@@ -21,6 +24,16 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { profile, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    if (profile?.role === "pharmacy") {
+      navigate({ to: "/pharmacy/dashboard" });
+    }
+  }, [profile, loading, navigate]);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />

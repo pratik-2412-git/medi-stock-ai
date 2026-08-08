@@ -134,10 +134,31 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+
+      // After sign-in, redirect users away from the landing/auth pages based on
+      // role. This covers email-confirmation logins (where no form handler runs)
+      // as well as regular form logins.
+      if (event === "SIGNED_IN" && session?.user) {
+        (async () => {
+          const currentPath = router.state.location.pathname;
+          if (currentPath === "/" || currentPath === "/auth") {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", session.user.id)
+              .maybeSingle();
+            if (profile?.role === "pharmacy") {
+              await router.navigate({ to: "/pharmacy/dashboard" });
+            } else if (currentPath === "/auth") {
+              await router.navigate({ to: "/" });
+            }
+          }
+        })();
+      }
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);
