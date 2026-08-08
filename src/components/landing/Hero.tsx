@@ -28,12 +28,14 @@ export function Hero() {
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <RoleButton
               to="/auth"
+              role="patient"
               icon={<User className="size-5" />}
               label="I'm a Patient"
               hint="Find medicines nearby"
             />
             <RoleButton
               to="/auth"
+              role="pharmacy"
               icon={<Building2 className="size-5" />}
               label="I'm a Pharmacy Owner"
               hint="Update stock, get alerts"
@@ -62,16 +64,18 @@ function RoleButton({
   icon,
   label,
   hint,
+  role,
 }: {
   to: string;
   icon: React.ReactNode;
   label: string;
   hint: string;
+  role: "patient" | "pharmacy";
 }) {
   return (
     <Link
       to={to}
-      search={{ mode: "signup" }}
+      search={{ mode: "signup", role }}
       className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lift"
     >
       <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
