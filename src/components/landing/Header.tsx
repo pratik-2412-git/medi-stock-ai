@@ -17,14 +17,14 @@ export function Header() {
         <nav className="flex items-center gap-2">
           <Link
             to="/auth"
-            search={{ mode: "login" }}
+            search={{ mode: "login", role: "patient" }}
             className="rounded-lg px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
           >
             Login
           </Link>
           <Link
             to="/auth"
-            search={{ mode: "signup" }}
+            search={{ mode: "signup", role: "patient" }}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
           >
             Sign Up
