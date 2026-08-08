@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useCurrentUser, useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/use-auth";
 import {
   usePharmacyRecord,
   usePharmacyStock,
@@ -25,8 +25,8 @@ export const Route = createFileRoute("/pharmacy/dashboard")({
 
 function PharmacyDashboard() {
   const navigate = useNavigate();
-  const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
+  const { user, profile, loading: userLoading } = useAuth();
+  const profileLoading = userLoading;
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -99,3 +99,4 @@ function CenteredMessage({ text }: { text: string }) {
     </div>
   );
 }
+
