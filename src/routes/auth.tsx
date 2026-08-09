@@ -103,6 +103,36 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
+  // Pharmacy-owner signup fields
+  const [pharmacyName, setPharmacyName] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Location is not supported by this browser");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(Number(position.coords.latitude.toFixed(6)));
+        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setLocating(false);
+        toast.success("Location captured");
+      },
+      () => {
+        setLocating(false);
+        toast.error("Could not get your location — you can enter it manually");
+      },
+    );
+  };
+
   // For the "reset" mode: the Supabase password-reset email links back here
   // with recovery tokens in the URL. The Supabase client picks those up
   // automatically and establishes a temporary recovery session — we just
