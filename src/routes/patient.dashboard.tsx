@@ -4,10 +4,19 @@ import { useEffect } from "react";
 import { useAuth, dashboardPathForRole } from "@/hooks/use-auth";
 
 const title = "Patient Dashboard — MediStock AI";
+const description =
+  "Search medicines and see which nearby pharmacies have them in stock right now.";
 
 export const Route = createFileRoute("/patient/dashboard")({
   head: () => ({
-    meta: [{ title }],
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: PatientDashboard,
 });
