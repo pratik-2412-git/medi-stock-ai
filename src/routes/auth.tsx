@@ -7,6 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  createPharmacyForUser,
+  flushPendingPharmacy,
+  savePendingPharmacy,
+  type PendingPharmacy,
+} from "@/lib/pharmacy-signup";
 
 const title = "Login or Sign Up — MediStock AI";
 const description =
