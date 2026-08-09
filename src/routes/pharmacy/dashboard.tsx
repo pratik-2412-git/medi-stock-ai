@@ -15,10 +15,19 @@ import { AlertsPanel } from "@/components/pharmacy/AlertsPanel";
 import { MedicineTable } from "@/components/pharmacy/MedicineTable";
 
 const title = "Pharmacy Dashboard — MediStock AI";
+const description =
+  "Monitor medicine stock levels, shortage predictions and alerts for your pharmacy.";
 
 export const Route = createFileRoute("/pharmacy/dashboard")({
   head: () => ({
-    meta: [{ title }],
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: PharmacyDashboard,
 });
