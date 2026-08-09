@@ -1,62 +1,161 @@
 # MediStock AI
 
-Stage:! Create a responsive full-stack healthcare web application called “MediStock AI” using React, Vite, Tailwind CSS, React Router, Node.js, Express, and Supabase.
+> AI-powered medicine stock monitoring, shortage prediction, pharmacy inventory management, and patient medicine discovery platform.
 
-MediStock AI helps patients find medicines at nearby pharmacies and helps pharmacy owners monitor stock and identify possible shortages.
+Developed as part of **IEMHACKS 4.0 Hackathon**.
 
-Create the initial landing page with:
+MediStock AI is designed to help pharmacies monitor medicine inventory, identify potential shortages, manage alerts, and help patients locate nearby pharmacies where required medicines may be available.
 
-- Logo: MediStock AI
+---
 
-- Login and Sign Up buttons
+## 🔗 Project Links
 
-- Hero headline:
+### GitHub Repository
+https://github.com/pratik-2412-git/medi-stock-ai
 
-  “Real-Time Medicine Stock and Shortage Prediction”
+### Supabase Project
+https://vhlmvntofqgyitdddpdn.supabase.co
 
-- Supporting text explaining that patients can find nearby medicines and pharmacies can receive shortage warnings.
+---
 
-- Three role buttons:
+## 🎯 Problem Statement
 
-  1. I’m a Patient — active
+Medicine shortages can create serious difficulties for both pharmacies and patients.
 
-  2. I’m a Pharmacy Owner — active
+Pharmacy owners need a way to:
 
-  3. I’m a Central Medical Store Admin — disabled 
+- Monitor medicine inventory.
+- Identify medicines approaching shortage.
+- Track stock and reorder levels.
+- Receive shortage alerts.
+- Analyze medicine sales trends.
+- Predict potential shortages.
 
-- How It Works section:
+Patients need a simple way to:
 
-  1. Pharmacies update stock
+- Search for medicines.
+- Find nearby pharmacies.
+- Check medicine availability.
+- Identify pharmacies with low-risk/in-stock medicines.
+- View pharmacy locations on a map.
+- Get directions and contact information.
 
-  2. AI predicts shortages
+MediStock AI brings these capabilities together in a single platform.
 
-  3. Patients find medicines nearby
+---
 
-- Footer links:
+## 🚀 Key Features
 
-  About, Contact, GitHub, Hackathon Information
+### 👨‍⚕️ Patient Dashboard
 
-Do not implement admin authentication or admin backend logic. Only display the disabled admin button.
+Patients can:
 
-Use a clean, modern, trustworthy healthcare design with green, blue, yellow, and red status colors.
+- Sign up and log in using email authentication.
+- Search for medicines.
+- Get medicine autocomplete suggestions.
+- Filter pharmacies by:
+  - In-stock medicines
+  - Low-risk medicines
+  - Pincode/area
+- Use their current location.
+- Find pharmacies within the relevant search radius.
+- View pharmacy stock status.
+- View pharmacy distance.
+- Call pharmacies.
+- Get directions through Google Maps.
+- View pharmacies on an interactive map.
+- Request notification when an unavailable medicine becomes available.
 
-This project was built with [Lovable](https://lovable.dev).
+---
 
-## Build with Lovable
+### 🏥 Pharmacy Owner Dashboard
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/418e8b79-3a88-4ffc-a1d5-fb3a6f6da96f).
+Pharmacy owners can:
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- Register/login using Supabase Authentication.
+- Complete pharmacy onboarding.
+- View inventory.
+- Add medicines to stock.
+- Update stock quantities.
+- Set reorder levels.
+- View stock status.
+- View medicine sales trends.
+- Run shortage predictions.
+- View shortage-risk information.
+- Receive stock alerts.
+- Mark alerts as read/dismiss alerts.
+- Monitor medicines that are low or out of stock.
 
-## Development
+---
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## 🤖 AI / Shortage Prediction
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+MediStock AI provides shortage-risk analysis based on medicine inventory and sales-related information.
+
+The pharmacy dashboard can:
+
+1. Monitor current medicine stock.
+2. Compare stock against reorder levels.
+3. Analyze medicine sales trends.
+4. Run shortage prediction.
+5. Store prediction results.
+6. Generate alerts when shortage risk is detected.
+
+Prediction results can be represented through shortage-risk categories such as:
+
+- Safe
+- Low
+- Medium
+- High
+- Critical
+
+---
+
+## 🗺️ Medicine Search & Pharmacy Map
+
+The patient dashboard supports location-based medicine discovery.
+
+The system can:
+
+- Detect the user's location through the browser Geolocation API.
+- Search pharmacies based on medicine availability.
+- Calculate distance between the user and pharmacies.
+- Filter results by location.
+- Display pharmacy results using cards.
+- Display pharmacies on a Leaflet/OpenStreetMap-based map.
+- Show stock status through map markers.
+- Provide directions through Google Maps.
+
+---
+
+## 🔐 Authentication
+
+MediStock AI uses **Supabase Authentication**.
+
+Authentication is handled through Supabase Auth rather than manually creating users inside the authentication database.
+
+The application supports role-based access for:
+
+- Patient
+- Pharmacy Owner
+
+The user's profile is associated with the authenticated Supabase user and determines the appropriate dashboard.
+
+### Authentication Flow
+
+```text
+User Signup
+     ↓
+Supabase Authentication
+     ↓
+Email Verification
+     ↓
+User Login
+     ↓
+Profile / Role Detection
+     ↓
+Role-based Dashboard
+     ↓
+Patient Dashboard
+       OR
+Pharmacy Owner Dashboard
