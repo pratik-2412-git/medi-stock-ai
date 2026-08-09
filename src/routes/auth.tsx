@@ -175,9 +175,10 @@ function AuthPage() {
       .eq("id", userId)
       .maybeSingle();
     if (profile?.role === "pharmacy") {
+      await flushPendingPharmacy(userId);
       await navigate({ to: "/pharmacy/dashboard" });
     } else {
-      await navigate({ to: "/" });
+      await navigate({ to: "/patient/dashboard" });
     }
   };
 
@@ -226,10 +227,30 @@ function AuthPage() {
       });
       if (error) throw error;
 
+      const pharmacyDetails: PendingPharmacy | null =
+        role === "pharmacy"
+          ? {
+              name: pharmacyName,
+              owner_name: fullName || null,
+              phone: phone || null,
+              address: address || null,
+              city: city || null,
+              state: stateName || null,
+              pincode: pincode || null,
+              latitude,
+              longitude,
+            }
+          : null;
+
       if (data.session) {
+        if (pharmacyDetails && data.user) {
+          await createPharmacyForUser(data.user.id, pharmacyDetails);
+        }
         toast.success("Account created");
         await redirectByRole(data.user?.id);
       } else {
+        // Email confirmation pending: keep the pharmacy details for the first sign-in.
+        if (pharmacyDetails) savePendingPharmacy(pharmacyDetails);
         toast.success("Check your email to confirm your account");
       }
     } catch (error) {
