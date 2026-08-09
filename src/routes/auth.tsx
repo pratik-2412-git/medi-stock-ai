@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, MapPin } from "lucide-react";
 
@@ -178,10 +178,7 @@ function AuthPage() {
       await flushPendingPharmacy(userId);
       await navigate({ to: "/pharmacy/dashboard" });
     } else {
-<<<<<<< HEAD
-=======
       // Both "patient" role and any unrecognised role go to the patient dashboard
->>>>>>> 98e72ee (feat: add stock management, alerts panel and patient medicine search dashboard)
       await navigate({ to: "/patient/dashboard" });
     }
   };
@@ -234,16 +231,16 @@ function AuthPage() {
       const pharmacyDetails: PendingPharmacy | null =
         role === "pharmacy"
           ? {
-              name: pharmacyName,
-              owner_name: fullName || null,
-              phone: phone || null,
-              address: address || null,
-              city: city || null,
-              state: stateName || null,
-              pincode: pincode || null,
-              latitude,
-              longitude,
-            }
+            name: pharmacyName,
+            owner_name: fullName || null,
+            phone: phone || null,
+            address: address || null,
+            city: city || null,
+            state: stateName || null,
+            pincode: pincode || null,
+            latitude,
+            longitude,
+          }
           : null;
 
       if (data.session) {
@@ -408,11 +405,10 @@ function AuthPage() {
                           key={option}
                           type="button"
                           onClick={() => setRole(option)}
-                          className={`rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors ${
-                            role === option
+                          className={`rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors ${role === option
                               ? "border-primary bg-primary/10 text-primary"
                               : "border-input bg-background text-muted-foreground hover:bg-accent"
-                          }`}
+                            }`}
                         >
                           {option === "patient" ? "Patient" : "Pharmacy owner"}
                         </button>
