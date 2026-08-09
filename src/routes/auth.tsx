@@ -415,6 +415,92 @@ function AuthPage() {
                       ))}
                     </div>
                   </div>
+
+                  {role === "pharmacy" && (
+                    <div className="space-y-4 rounded-xl border border-border bg-secondary/40 p-4">
+                      <p className="text-sm font-semibold text-foreground">Pharmacy details</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="pharmacyName">Pharmacy name</Label>
+                        <Input
+                          id="pharmacyName"
+                          value={pharmacyName}
+                          onChange={(e) => setPharmacyName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Address</Label>
+                        <Input
+                          id="address"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          <Input
+                            id="city"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="state">State</Label>
+                          <Input
+                            id="state"
+                            value={stateName}
+                            onChange={(e) => setStateName(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pincode">Pincode</Label>
+                        <Input
+                          id="pincode"
+                          inputMode="numeric"
+                          pattern="[0-9]{4,10}"
+                          value={pincode}
+                          onChange={(e) => setPincode(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Location</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Input
+                            aria-label="Latitude"
+                            placeholder="Latitude"
+                            value={latitude ?? ""}
+                            onChange={(e) =>
+                              setLatitude(e.target.value === "" ? null : Number(e.target.value))
+                            }
+                          />
+                          <Input
+                            aria-label="Longitude"
+                            placeholder="Longitude"
+                            value={longitude ?? ""}
+                            onChange={(e) =>
+                              setLongitude(e.target.value === "" ? null : Number(e.target.value))
+                            }
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={detectLocation}
+                          disabled={locating}
+                        >
+                          <MapPin className="mr-2 size-4" />
+                          {locating ? "Getting location..." : "Use my current location"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
