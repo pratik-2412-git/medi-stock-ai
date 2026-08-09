@@ -1,12 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect,useState } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, MapPin } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  createPharmacyForUser,
+  flushPendingPharmacy,
+  savePendingPharmacy,
+  type PendingPharmacy,
+} from "@/lib/pharmacy-signup";
 
 const title = "Login or Sign Up — MediStock AI";
 const description =
@@ -97,6 +103,36 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
+  // Pharmacy-owner signup fields
+  const [pharmacyName, setPharmacyName] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Location is not supported by this browser");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(Number(position.coords.latitude.toFixed(6)));
+        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setLocating(false);
+        toast.success("Location captured");
+      },
+      () => {
+        setLocating(false);
+        toast.error("Could not get your location — you can enter it manually");
+      },
+    );
+  };
+
   // For the "reset" mode: the Supabase password-reset email links back here
   // with recovery tokens in the URL. The Supabase client picks those up
   // automatically and establishes a temporary recovery session — we just
@@ -139,9 +175,10 @@ function AuthPage() {
       .eq("id", userId)
       .maybeSingle();
     if (profile?.role === "pharmacy") {
+      await flushPendingPharmacy(userId);
       await navigate({ to: "/pharmacy/dashboard" });
     } else {
-      await navigate({ to: "/" });
+      await navigate({ to: "/patient/dashboard" });
     }
   };
 
@@ -190,10 +227,30 @@ function AuthPage() {
       });
       if (error) throw error;
 
+      const pharmacyDetails: PendingPharmacy | null =
+        role === "pharmacy"
+          ? {
+              name: pharmacyName,
+              owner_name: fullName || null,
+              phone: phone || null,
+              address: address || null,
+              city: city || null,
+              state: stateName || null,
+              pincode: pincode || null,
+              latitude,
+              longitude,
+            }
+          : null;
+
       if (data.session) {
+        if (pharmacyDetails && data.user) {
+          await createPharmacyForUser(data.user.id, pharmacyDetails);
+        }
         toast.success("Account created");
         await redirectByRole(data.user?.id);
       } else {
+        // Email confirmation pending: keep the pharmacy details for the first sign-in.
+        if (pharmacyDetails) savePendingPharmacy(pharmacyDetails);
         toast.success("Check your email to confirm your account");
       }
     } catch (error) {
@@ -358,6 +415,92 @@ function AuthPage() {
                       ))}
                     </div>
                   </div>
+
+                  {role === "pharmacy" && (
+                    <div className="space-y-4 rounded-xl border border-border bg-secondary/40 p-4">
+                      <p className="text-sm font-semibold text-foreground">Pharmacy details</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="pharmacyName">Pharmacy name</Label>
+                        <Input
+                          id="pharmacyName"
+                          value={pharmacyName}
+                          onChange={(e) => setPharmacyName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Address</Label>
+                        <Input
+                          id="address"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          <Input
+                            id="city"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="state">State</Label>
+                          <Input
+                            id="state"
+                            value={stateName}
+                            onChange={(e) => setStateName(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pincode">Pincode</Label>
+                        <Input
+                          id="pincode"
+                          inputMode="numeric"
+                          pattern="[0-9]{4,10}"
+                          value={pincode}
+                          onChange={(e) => setPincode(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Location</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Input
+                            aria-label="Latitude"
+                            placeholder="Latitude"
+                            value={latitude ?? ""}
+                            onChange={(e) =>
+                              setLatitude(e.target.value === "" ? null : Number(e.target.value))
+                            }
+                          />
+                          <Input
+                            aria-label="Longitude"
+                            placeholder="Longitude"
+                            value={longitude ?? ""}
+                            onChange={(e) =>
+                              setLongitude(e.target.value === "" ? null : Number(e.target.value))
+                            }
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={detectLocation}
+                          disabled={locating}
+                        >
+                          <MapPin className="mr-2 size-4" />
+                          {locating ? "Getting location..." : "Use my current location"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
