@@ -10,15 +10,16 @@ import {
 } from "@/hooks/usePharmacyDashboard";
 import { PharmacyOnboarding } from "@/components/pharmacy/PharmacyOnboarding";
 import { DashboardTopBar } from "@/components/pharmacy/DashboardTopBar";
-import { SummaryCards } from "@/components/pharmacy/SummaryCards";
-import { AlertsPanel } from "@/components/pharmacy/AlertsPanel";
-import { MedicineTable } from "@/components/pharmacy/MedicineTable";
+import { SummaryCardsEnhanced } from "@/components/pharmacy/SummaryCardsEnhanced";
+import { AlertsPanelEnhanced } from "@/components/pharmacy/AlertsPanelEnhanced";
+import { MedicineTableEnhanced } from "@/components/pharmacy/MedicineTableEnhanced";
 
 const title = "Pharmacy Dashboard — MediStock AI";
 const description =
   "Monitor medicine stock levels, shortage predictions and alerts for your pharmacy.";
 
 export const Route = createFileRoute("/pharmacy/dashboard")({
+<<<<<<< HEAD
   head: () => ({
     meta: [
       { title },
@@ -29,13 +30,15 @@ export const Route = createFileRoute("/pharmacy/dashboard")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+=======
+  head: () => ({ meta: [{ title }] }),
+>>>>>>> 98e72ee (feat: add stock management, alerts panel and patient medicine search dashboard)
   component: PharmacyDashboard,
 });
 
 function PharmacyDashboard() {
   const navigate = useNavigate();
   const { user, profile, loading: userLoading } = useAuth();
-  const profileLoading = userLoading;
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -49,13 +52,8 @@ function PharmacyDashboard() {
   const { data: predictions, isLoading: predictionsLoading } = usePharmacyPredictions(pharmacyId);
   const { data: alerts, isLoading: alertsLoading } = usePharmacyAlerts(pharmacyId);
 
-  if (userLoading || profileLoading) {
-    return <CenteredMessage text="Loading..." />;
-  }
-
-  if (!user) {
-    return <CenteredMessage text="Redirecting to login..." />;
-  }
+  if (userLoading) return <CenteredMessage text="Loading..." />;
+  if (!user) return <CenteredMessage text="Redirecting to login..." />;
 
   if (profile && profile.role !== "pharmacy") {
     return (
@@ -76,26 +74,29 @@ function PharmacyDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <DashboardTopBar pharmacy={pharmacy} />
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        {isLoadingData ? (
-          <CenteredMessage text="Loading dashboard..." />
-        ) : (
-          <>
-            <SummaryCards stock={stock ?? []} predictions={predictions ?? []} />
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <MedicineTable
-                  pharmacyId={pharmacy.id}
-                  stock={stock ?? []}
-                  predictions={predictions ?? []}
-                />
-              </div>
-              <div>
-                <AlertsPanel alerts={alerts ?? []} />
-              </div>
-            </div>
-          </>
-        )}
+      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+        <SummaryCardsEnhanced
+          stock={stock ?? []}
+          predictions={predictions ?? []}
+          isLoading={isLoadingData}
+        />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <MedicineTableEnhanced
+              pharmacyId={pharmacy.id}
+              stock={stock ?? []}
+              predictions={predictions ?? []}
+              isLoading={isLoadingData}
+            />
+          </div>
+          <div>
+            <AlertsPanelEnhanced
+              alerts={alerts ?? []}
+              isLoading={isLoadingData}
+              pharmacyId={pharmacy.id}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );
@@ -108,4 +109,3 @@ function CenteredMessage({ text }: { text: string }) {
     </div>
   );
 }
-

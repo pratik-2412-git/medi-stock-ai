@@ -153,8 +153,9 @@ function RootComponent() {
               .maybeSingle();
             if (profile?.role === "pharmacy") {
               await router.navigate({ to: "/pharmacy/dashboard" });
-            } else if (currentPath === "/auth") {
-              await router.navigate({ to: "/" });
+            } else {
+              // Both "patient" role and any unrecognised role go to the patient dashboard
+              await router.navigate({ to: "/patient/dashboard" });
             }
           }
         })();

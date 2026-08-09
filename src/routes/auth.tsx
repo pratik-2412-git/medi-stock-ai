@@ -166,7 +166,7 @@ function AuthPage() {
 
   const redirectByRole = async (userId: string | undefined) => {
     if (!userId) {
-      await navigate({ to: "/" });
+      await navigate({ to: "/patient/dashboard" });
       return;
     }
     const { data: profile } = await supabase
@@ -178,6 +178,10 @@ function AuthPage() {
       await flushPendingPharmacy(userId);
       await navigate({ to: "/pharmacy/dashboard" });
     } else {
+<<<<<<< HEAD
+=======
+      // Both "patient" role and any unrecognised role go to the patient dashboard
+>>>>>>> 98e72ee (feat: add stock management, alerts panel and patient medicine search dashboard)
       await navigate({ to: "/patient/dashboard" });
     }
   };
