@@ -37,11 +37,15 @@ function PharmacyDashboard() {
  
   useEffect(() => {
     if (!userLoading && !user) {
-      navigate({ to: "/auth", search: { mode: "login", role: "pharmacy" } });
+      navigate({
+        to: "/auth",
+        search: { mode: "login", role: "pharmacy" },
+      });
     }
   }, [userLoading, user, navigate]);
  
   const pharmacyId = profile?.pharmacy_id ?? null;
+<<<<<<< HEAD
  
   const { data: pharmacy, isLoading: pharmacyLoading } = usePharmacyRecord(pharmacyId);
   const { data: stock, isLoading: stockLoading } = usePharmacyStock(pharmacyId);
@@ -51,6 +55,37 @@ function PharmacyDashboard() {
   if (userLoading) return <CenteredMessage text="Loading..." />;
   if (!user) return <CenteredMessage text="Redirecting to login..." />;
  
+=======
+
+  const {
+    data: pharmacy,
+    isLoading: pharmacyLoading,
+  } = usePharmacyRecord(pharmacyId);
+
+  const {
+    data: stock,
+    isLoading: stockLoading,
+  } = usePharmacyStock(pharmacyId);
+
+  const {
+    data: predictions,
+    isLoading: predictionsLoading,
+  } = usePharmacyPredictions(pharmacyId);
+
+  const {
+    data: alerts,
+    isLoading: alertsLoading,
+  } = usePharmacyAlerts(pharmacyId);
+
+  if (userLoading) {
+    return <CenteredMessage text="Loading..." />;
+  }
+
+  if (!user) {
+    return <CenteredMessage text="Redirecting to login..." />;
+  }
+
+>>>>>>> 5352b5fdc455702ba8ecd9ade5388a4156aa7648
   if (profile && profile.role !== "pharmacy") {
     return (
       <CenteredMessage text="This dashboard is for pharmacy owner accounts. Please log in with a pharmacy account." />
@@ -64,18 +99,27 @@ function PharmacyDashboard() {
   if (pharmacyLoading || !pharmacy) {
     return <CenteredMessage text="Loading your pharmacy..." />;
   }
+<<<<<<< HEAD
  
   const isLoadingData = stockLoading || predictionsLoading || alertsLoading;
  
+=======
+
+  const isLoadingData =
+    stockLoading || predictionsLoading || alertsLoading;
+
+>>>>>>> 5352b5fdc455702ba8ecd9ade5388a4156aa7648
   return (
     <div className="min-h-screen bg-background">
       <DashboardTopBar pharmacy={pharmacy} />
+
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
         <SummaryCardsEnhanced
           stock={stock ?? []}
           predictions={predictions ?? []}
           isLoading={isLoadingData}
         />
+
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <MedicineTableEnhanced
@@ -85,6 +129,7 @@ function PharmacyDashboard() {
               isLoading={isLoadingData}
             />
           </div>
+
           <div>
             <AlertsPanelEnhanced
               alerts={alerts ?? []}
@@ -104,4 +149,10 @@ function CenteredMessage({ text }: { text: string }) {
       <p className="text-sm text-muted-foreground">{text}</p>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+
+
+>>>>>>> 5352b5fdc455702ba8ecd9ade5388a4156aa7648
