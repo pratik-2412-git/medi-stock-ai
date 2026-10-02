@@ -145,6 +145,16 @@ function RootComponent() {
       if (event === "SIGNED_IN" && session?.user) {
         (async () => {
           const currentPath = router.state.location.pathname;
+          const currentSearch = router.state.location.search as Record<string, unknown> | undefined;
+          const authMode = currentSearch?.["mode"];
+          // Don't hijack the forgot/reset-password flow: establishing the
+          // recovery session from the email link can itself fire SIGNED_IN
+          // in some client versions, which would otherwise redirect the
+          // user straight to their dashboard before they can set a new
+          // password on the /auth?mode=reset screen.
+          if (currentPath === "/auth" && (authMode === "reset" || authMode === "forgot")) {
+            return;
+          }
           if (currentPath === "/" || currentPath === "/auth") {
             const { data: profile } = await supabase
               .from("profiles")

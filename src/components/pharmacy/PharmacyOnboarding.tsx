@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MapPin } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,15 +15,52 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [phone, setPhone] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Location is not supported by this browser");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(Number(position.coords.latitude.toFixed(6)));
+        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setLocating(false);
+        toast.success("Location captured");
+      },
+      () => {
+        setLocating(false);
+        toast.error("Could not get your location — you can enter it manually");
+      },
+    );
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
     try {
+      // Saving pincode + latitude/longitude here is what makes this pharmacy
+      // show up in a patient's "within 10km" medicine search — without
+      // these, the pharmacy is created but permanently invisible to search.
       const { data: pharmacy, error: pharmacyError } = await supabase
         .from("pharmacies")
-        .insert({ name, address, city, state, phone, owner_name: null })
+        .insert({
+          name,
+          address,
+          city,
+          state,
+          phone,
+          pincode: pincode || null,
+          latitude,
+          longitude,
+          owner_name: null,
+        })
         .select("id")
         .single();
       if (pharmacyError) throw pharmacyError;
@@ -71,17 +109,56 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Input
-                id="state"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                required
-              />
+              <Input id="state" value={state} onChange={(e) => setState(e.target.value)} required />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pincode">Pincode</Label>
+            <Input
+              id="pincode"
+              inputMode="numeric"
+              pattern="[0-9]{4,10}"
+              value={pincode}
+              onChange={(e) => setPincode(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
             <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Location</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                aria-label="Latitude"
+                placeholder="Latitude"
+                value={latitude ?? ""}
+                onChange={(e) => setLatitude(e.target.value === "" ? null : Number(e.target.value))}
+              />
+              <Input
+                aria-label="Longitude"
+                placeholder="Longitude"
+                value={longitude ?? ""}
+                onChange={(e) =>
+                  setLongitude(e.target.value === "" ? null : Number(e.target.value))
+                }
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={detectLocation}
+              disabled={locating}
+            >
+              <MapPin className="mr-2 size-4" />
+              {locating ? "Getting location..." : "Use my current location"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              This is required so patients searching nearby can find your pharmacy.
+            </p>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

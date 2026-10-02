@@ -203,10 +203,15 @@ function AuthPage() {
           toast.error("Passwords do not match");
           return;
         }
-        const { data, error } = await supabase.auth.updateUser({ password });
+        const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
-        toast.success("Password updated — you're logged in");
-        await redirectByRole(data.user?.id);
+        // updateUser() runs on the temporary recovery session, which would
+        // otherwise leave the patient signed in. Sign them out explicitly
+        // so they have to log in with the new password, confirming it was
+        // saved correctly rather than coasting in on the recovery session.
+        await supabase.auth.signOut();
+        toast.success("Password updated — please log in with your new password");
+        await navigate({ to: "/auth", search: { mode: "login", role } });
         return;
       }
 
