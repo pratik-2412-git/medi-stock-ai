@@ -316,6 +316,16 @@ export type Database = {
     }
     Functions: {
       owns_pharmacy: { Args: { _pharmacy_id: string }; Returns: boolean }
+      record_sale: {
+        Args: { p_pharmacy_id: string; p_medicine_id: string; p_quantity: number }
+        Returns: {
+          id: string
+          medicine_id: string
+          pharmacy_id: string
+          quantity_sold: number
+          sale_date: string
+        }
+      }
     }
     Enums: {
       [_ in never]: never

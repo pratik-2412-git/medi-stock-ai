@@ -12,11 +12,11 @@ import { DashboardTopBar } from "@/components/pharmacy/DashboardTopBar";
 import { SummaryCardsEnhanced } from "@/components/pharmacy/SummaryCardsEnhanced";
 import { AlertsPanelEnhanced } from "@/components/pharmacy/AlertsPanelEnhanced";
 import { MedicineTableEnhanced } from "@/components/pharmacy/MedicineTableEnhanced";
- 
+
 const title = "Pharmacy Dashboard — MediStock AI";
 const description =
   "Monitor medicine stock levels, shortage predictions and alerts for your pharmacy.";
- 
+
 export const Route = createFileRoute("/pharmacy/dashboard")({
   head: () => ({
     meta: [
@@ -30,11 +30,11 @@ export const Route = createFileRoute("/pharmacy/dashboard")({
   }),
   component: PharmacyDashboard,
 });
- 
+
 function PharmacyDashboard() {
   const navigate = useNavigate();
   const { user, profile, loading: userLoading } = useAuth();
- 
+
   useEffect(() => {
     if (!userLoading && !user) {
       navigate({
@@ -43,72 +43,33 @@ function PharmacyDashboard() {
       });
     }
   }, [userLoading, user, navigate]);
- 
+
   const pharmacyId = profile?.pharmacy_id ?? null;
-<<<<<<< HEAD
- 
+
   const { data: pharmacy, isLoading: pharmacyLoading } = usePharmacyRecord(pharmacyId);
   const { data: stock, isLoading: stockLoading } = usePharmacyStock(pharmacyId);
   const { data: predictions, isLoading: predictionsLoading } = usePharmacyPredictions(pharmacyId);
   const { data: alerts, isLoading: alertsLoading } = usePharmacyAlerts(pharmacyId);
- 
+
   if (userLoading) return <CenteredMessage text="Loading..." />;
   if (!user) return <CenteredMessage text="Redirecting to login..." />;
- 
-=======
 
-  const {
-    data: pharmacy,
-    isLoading: pharmacyLoading,
-  } = usePharmacyRecord(pharmacyId);
-
-  const {
-    data: stock,
-    isLoading: stockLoading,
-  } = usePharmacyStock(pharmacyId);
-
-  const {
-    data: predictions,
-    isLoading: predictionsLoading,
-  } = usePharmacyPredictions(pharmacyId);
-
-  const {
-    data: alerts,
-    isLoading: alertsLoading,
-  } = usePharmacyAlerts(pharmacyId);
-
-  if (userLoading) {
-    return <CenteredMessage text="Loading..." />;
-  }
-
-  if (!user) {
-    return <CenteredMessage text="Redirecting to login..." />;
-  }
-
->>>>>>> 5352b5fdc455702ba8ecd9ade5388a4156aa7648
   if (profile && profile.role !== "pharmacy") {
     return (
       <CenteredMessage text="This dashboard is for pharmacy owner accounts. Please log in with a pharmacy account." />
     );
   }
- 
+
   if (profile && !profile.pharmacy_id) {
     return <PharmacyOnboarding userId={user.id} />;
   }
- 
+
   if (pharmacyLoading || !pharmacy) {
     return <CenteredMessage text="Loading your pharmacy..." />;
   }
-<<<<<<< HEAD
- 
+
   const isLoadingData = stockLoading || predictionsLoading || alertsLoading;
- 
-=======
 
-  const isLoadingData =
-    stockLoading || predictionsLoading || alertsLoading;
-
->>>>>>> 5352b5fdc455702ba8ecd9ade5388a4156aa7648
   return (
     <div className="min-h-screen bg-background">
       <DashboardTopBar pharmacy={pharmacy} />
@@ -142,17 +103,11 @@ function PharmacyDashboard() {
     </div>
   );
 }
- 
+
 function CenteredMessage({ text }: { text: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <p className="text-sm text-muted-foreground">{text}</p>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
-
-
->>>>>>> 5352b5fdc455702ba8ecd9ade5388a4156aa7648

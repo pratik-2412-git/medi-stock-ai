@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isValidLatitude, isValidLongitude, parseCoordinate } from "@/lib/pharmacy-signup";
 
 export function PharmacyOnboarding({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
@@ -16,8 +17,10 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
   const [state, setState] = useState("");
   const [phone, setPhone] = useState("");
   const [pincode, setPincode] = useState("");
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  // Raw strings while typing (not numbers), so a partial entry like "19."
+  // isn't silently rounded mid-keystroke. Parsed + range-validated on submit.
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [locating, setLocating] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -29,8 +32,8 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLatitude(Number(position.coords.latitude.toFixed(6)));
-        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setLatitude(position.coords.latitude.toFixed(6));
+        setLongitude(position.coords.longitude.toFixed(6));
         setLocating(false);
         toast.success("Location captured");
       },
@@ -43,6 +46,28 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    // A trailing decimal point ("19.") is an incomplete entry, and a value
+    // outside the real coordinate range is never storable.
+    const parsedLatitude = parseCoordinate(latitude);
+    const parsedLongitude = parseCoordinate(longitude);
+    if (latitude.trim() !== "" && parsedLatitude === null) {
+      toast.error("Latitude must be a complete decimal number, e.g. 19.0760");
+      return;
+    }
+    if (longitude.trim() !== "" && parsedLongitude === null) {
+      toast.error("Longitude must be a complete decimal number, e.g. 72.8777");
+      return;
+    }
+    if (parsedLatitude !== null && !isValidLatitude(parsedLatitude)) {
+      toast.error("Latitude must be between -90 and 90");
+      return;
+    }
+    if (parsedLongitude !== null && !isValidLongitude(parsedLongitude)) {
+      toast.error("Longitude must be between -180 and 180");
+      return;
+    }
+
     setLoading(true);
     try {
       // Saving pincode + latitude/longitude here is what makes this pharmacy
@@ -57,8 +82,8 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
           state,
           phone,
           pincode: pincode || null,
-          latitude,
-          longitude,
+          latitude: parsedLatitude,
+          longitude: parsedLongitude,
           owner_name: null,
         })
         .select("id")
@@ -134,16 +159,16 @@ export function PharmacyOnboarding({ userId }: { userId: string }) {
               <Input
                 aria-label="Latitude"
                 placeholder="Latitude"
-                value={latitude ?? ""}
-                onChange={(e) => setLatitude(e.target.value === "" ? null : Number(e.target.value))}
+                inputMode="decimal"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
               />
               <Input
                 aria-label="Longitude"
                 placeholder="Longitude"
-                value={longitude ?? ""}
-                onChange={(e) =>
-                  setLongitude(e.target.value === "" ? null : Number(e.target.value))
-                }
+                inputMode="decimal"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
               />
             </div>
             <Button

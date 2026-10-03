@@ -226,6 +226,17 @@ const severityConfig: Record<SeverityKey, SeverityCfg> = {
 
 const fallbackCfg: SeverityCfg = severityConfig["Low"];
 
+// Matches the Safe/Low Risk/Medium Risk/High Risk wording used in the
+// medicine table and predictions dialog (src/lib/shortage.ts). Critical
+// isn't produced by the current shortage classifier, but is kept here
+// since the `alerts.severity` column still allows it.
+const severityLabel: Record<SeverityKey, string> = {
+  Critical: "Critical",
+  High: "High Risk",
+  Medium: "Medium Risk",
+  Low: "Low Risk",
+};
+
 function isSeverityKey(s: string): s is SeverityKey {
   return s === "Critical" || s === "High" || s === "Medium" || s === "Low";
 }
@@ -342,7 +353,7 @@ export function AlertsPanelEnhanced({ alerts, isLoading = false, pharmacyId }: A
                     </div>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${cfg.badgeClass}`}>
-                        {alert.severity}
+                        {isSeverityKey(alert.severity) ? severityLabel[alert.severity] : alert.severity}
                       </Badge>
                       {!alert.is_read && (
                         <button

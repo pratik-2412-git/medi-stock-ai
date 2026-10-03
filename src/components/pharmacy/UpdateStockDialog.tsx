@@ -59,6 +59,7 @@ export function UpdateStockDialog({
       medicineId,
       medicineName: selectedMedicine.name,
       stockId: existingRow?.id ?? null,
+      previousQuantity: existingRow?.quantity ?? null,
       quantity: Number(quantity) || 0,
       reorderLevel: Number(reorderLevel) || 0,
     });

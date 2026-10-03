@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import {
   createPharmacyForUser,
   flushPendingPharmacy,
+  isValidLatitude,
+  isValidLongitude,
+  parseCoordinate,
   savePendingPharmacy,
   type PendingPharmacy,
 } from "@/lib/pharmacy-signup";
@@ -109,8 +112,11 @@ function AuthPage() {
   const [city, setCity] = useState("");
   const [stateName, setStateName] = useState("");
   const [pincode, setPincode] = useState("");
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  // Kept as raw strings (not numbers) while the user is typing, so a partial
+  // entry like "19." isn't silently rounded mid-keystroke. Parsed and
+  // range-validated at submit time via parseCoordinate/isValidLatitude/isValidLongitude.
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [locating, setLocating] = useState(false);
 
   const detectLocation = () => {
@@ -121,8 +127,8 @@ function AuthPage() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLatitude(Number(position.coords.latitude.toFixed(6)));
-        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setLatitude(position.coords.latitude.toFixed(6));
+        setLongitude(position.coords.longitude.toFixed(6));
         setLocating(false);
         toast.success("Location captured");
       },
@@ -223,6 +229,33 @@ function AuthPage() {
         return;
       }
 
+      // Validate latitude/longitude before touching the network: a trailing
+      // decimal point ("19.") is an incomplete entry, and a value outside
+      // the real coordinate range is never storable.
+      let parsedLatitude: number | null = null;
+      let parsedLongitude: number | null = null;
+      if (role === "pharmacy") {
+        parsedLatitude = parseCoordinate(latitude);
+        parsedLongitude = parseCoordinate(longitude);
+
+        if (latitude.trim() !== "" && parsedLatitude === null) {
+          toast.error("Latitude must be a complete decimal number, e.g. 19.0760");
+          return;
+        }
+        if (longitude.trim() !== "" && parsedLongitude === null) {
+          toast.error("Longitude must be a complete decimal number, e.g. 72.8777");
+          return;
+        }
+        if (parsedLatitude !== null && !isValidLatitude(parsedLatitude)) {
+          toast.error("Latitude must be between -90 and 90");
+          return;
+        }
+        if (parsedLongitude !== null && !isValidLongitude(parsedLongitude)) {
+          toast.error("Longitude must be between -180 and 180");
+          return;
+        }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -231,7 +264,22 @@ function AuthPage() {
           data: { full_name: fullName, phone, role },
         },
       });
-      if (error) throw error;
+      if (error) {
+        if (/already registered|already exists/i.test(error.message)) {
+          toast.error("This account is already registered. Please log in instead.");
+          return;
+        }
+        throw error;
+      }
+
+      // Supabase doesn't return an error for a pre-existing email (to avoid
+      // leaking which emails are registered) — instead it returns a "ghost"
+      // user with an empty identities array. Catch that case explicitly so
+      // we never silently create a duplicate account or overwrite pharmacy data.
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        toast.error("This account is already registered. Please log in instead.");
+        return;
+      }
 
       const pharmacyDetails: PendingPharmacy | null =
         role === "pharmacy"
@@ -243,8 +291,8 @@ function AuthPage() {
             city: city || null,
             state: stateName || null,
             pincode: pincode || null,
-            latitude,
-            longitude,
+            latitude: parsedLatitude,
+            longitude: parsedLongitude,
           }
           : null;
 
@@ -479,18 +527,16 @@ function AuthPage() {
                           <Input
                             aria-label="Latitude"
                             placeholder="Latitude"
-                            value={latitude ?? ""}
-                            onChange={(e) =>
-                              setLatitude(e.target.value === "" ? null : Number(e.target.value))
-                            }
+                            inputMode="decimal"
+                            value={latitude}
+                            onChange={(e) => setLatitude(e.target.value)}
                           />
                           <Input
                             aria-label="Longitude"
                             placeholder="Longitude"
-                            value={longitude ?? ""}
-                            onChange={(e) =>
-                              setLongitude(e.target.value === "" ? null : Number(e.target.value))
-                            }
+                            inputMode="decimal"
+                            value={longitude}
+                            onChange={(e) => setLongitude(e.target.value)}
                           />
                         </div>
                         <Button

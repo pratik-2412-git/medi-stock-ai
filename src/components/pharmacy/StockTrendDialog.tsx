@@ -19,40 +19,73 @@ interface StockTrendDialogProps {
   pharmacyId: string;
 }
  
+const WINDOW_DAYS = 30;
+
+/** YYYY-MM-DD for a Date in the user's LOCAL timezone (toISOString would shift it to UTC). */
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** The rolling window: today and the 29 days before it, oldest first, as local dates. */
+function rollingWindow(): Date[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Array.from({ length: WINDOW_DAYS }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (WINDOW_DAYS - 1 - i));
+    return d;
+  });
+}
+
 export function StockTrendDialog({ open, onOpenChange, row, pharmacyId }: StockTrendDialogProps) {
   const { data: salesData, isLoading } = useQuery({
     queryKey: ["sales-trend", pharmacyId, row?.medicine_id],
     enabled: open && !!row,
     queryFn: async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      const days = rollingWindow();
+      const start = localDateKey(days.at(0) ?? new Date());
+      const end = localDateKey(days.at(-1) ?? new Date());
       const { data, error } = await supabase
         .from("sales")
         .select("sale_date, quantity_sold")
         .eq("pharmacy_id", pharmacyId)
         .eq("medicine_id", row!.medicine_id)
-        .gte("sale_date", thirtyDaysAgo.toISOString().slice(0, 10))
+        .gte("sale_date", start)
+        .lte("sale_date", end)
         .order("sale_date", { ascending: true });
-      if (error) throw error;
+      if (error) {
+        console.error("Failed to load sales trend", error);
+        throw error;
+      }
       return data ?? [];
     },
   });
- 
-  const chartData = salesData?.map((s) => ({
-    date: new Date(s.sale_date).toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
-    sold: s.quantity_sold,
-  })) ?? [];
- 
-  const avgSold = chartData.length
-    ? Math.round(chartData.reduce((a, b) => a + b.sold, 0) / chartData.length)
-    : 0;
- 
-  const recent = chartData.slice(-7);
-  const older = chartData.slice(-14, -7);
-  const recentAvg = recent.length ? recent.reduce((a, b) => a + b.sold, 0) / recent.length : 0;
-  const olderAvg = older.length ? older.reduce((a, b) => a + b.sold, 0) / older.length : 0;
+
+  // Sum quantity_sold per calendar day (several rows may exist for one day),
+  // then lay the sums over the full rolling 30-day window. A day with no
+  // sales row is a day with no recorded sales (0) — nothing is invented.
+  const soldByDate = new Map<string, number>();
+  for (const s of salesData ?? []) {
+    soldByDate.set(s.sale_date, (soldByDate.get(s.sale_date) ?? 0) + s.quantity_sold);
+  }
+  const hasSales = (salesData?.length ?? 0) > 0;
+
+  const chartData = rollingWindow().map((d) => ({
+    date: d.toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
+    sold: soldByDate.get(localDateKey(d)) ?? 0,
+  }));
+
+  const sum = (rows: { sold: number }[]) => rows.reduce((a, b) => a + b.sold, 0);
+  const avgSold = hasSales ? Math.round((sum(chartData) / WINDOW_DAYS) * 10) / 10 : 0;
+
+  // 7-day trend: the last 7 days vs the 7 days before them.
+  const recentAvg = sum(chartData.slice(-7)) / 7;
+  const olderAvg = sum(chartData.slice(-14, -7)) / 7;
   const trend = recentAvg > olderAvg + 0.5 ? "up" : recentAvg < olderAvg - 0.5 ? "down" : "flat";
- 
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -83,7 +116,7 @@ export function StockTrendDialog({ open, onOpenChange, row, pharmacyId }: StockT
           <p className="mb-3 text-sm font-medium text-muted-foreground">Daily Sales (Last 30 Days)</p>
           {isLoading ? (
             <Skeleton className="h-48 w-full" />
-          ) : chartData.length === 0 ? (
+          ) : !hasSales ? (
             <div className="flex h-48 items-center justify-center rounded-lg border border-dashed">
               <p className="text-sm text-muted-foreground">No sales data available</p>
             </div>

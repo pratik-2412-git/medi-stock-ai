@@ -2,6 +2,7 @@ import { Package, AlertTriangle, Clock, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PredictionRow, StockWithMedicine } from "@/hooks/usePharmacyDashboard";
+import { classifyStockLevel, LOW_STOCK_THRESHOLD } from "@/lib/stock-thresholds";
  
 interface SummaryCardsEnhancedProps {
   stock: StockWithMedicine[];
@@ -10,9 +11,12 @@ interface SummaryCardsEnhancedProps {
 }
  
 export function SummaryCardsEnhanced({ stock, predictions, isLoading = false }: SummaryCardsEnhancedProps) {
+  // 0 = Out of Stock, 1..LOW_STOCK_THRESHOLD = Low Stock, >LOW_STOCK_THRESHOLD = Normal.
+  // Counted separately so Low Stock no longer double-counts items that are
+  // actually out of stock.
   const totalTracked = stock.length;
-  const lowStock = stock.filter((r) => r.quantity <= r.reorder_level).length;
-  const outOfStock = stock.filter((r) => r.quantity === 0).length;
+  const outOfStock = stock.filter((r) => classifyStockLevel(r.quantity) === "out").length;
+  const lowStock = stock.filter((r) => classifyStockLevel(r.quantity) === "low").length;
   const highRisk = new Set(
     predictions.filter((p) => p.shortage_class === "High").map((p) => p.medicine_id)
   ).size;
@@ -33,7 +37,7 @@ export function SummaryCardsEnhanced({ stock, predictions, isLoading = false }: 
     {
       label: "Low Stock",
       value: lowStock,
-      sub: outOfStock > 0 ? `${outOfStock} out of stock` : "at or below reorder",
+      sub: outOfStock > 0 ? `${outOfStock} out of stock` : `${LOW_STOCK_THRESHOLD} units or fewer`,
       icon: TrendingDown,
       color: "text-status-warn-foreground",
       bg: "bg-status-warn-soft",
@@ -108,4 +112,3 @@ export function SummaryCardsEnhanced({ stock, predictions, isLoading = false }: 
     </div>
   );
 }
- 

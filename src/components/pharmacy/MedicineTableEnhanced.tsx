@@ -206,7 +206,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { shortageBadgeClasses, type ShortageClass } from "@/lib/shortage";
+import { shortageBadgeClasses, shortageLabel, type ShortageClass } from "@/lib/shortage";
 import type { PredictionRow, StockWithMedicine } from "@/hooks/usePharmacyDashboard";
 import { UpdateStockDialog } from "@/components/pharmacy/UpdateStockDialog";
 import { StockTrendDialog } from "@/components/pharmacy/StockTrendDialog";
@@ -331,7 +331,7 @@ export function MedicineTableEnhanced({
                       <TableCell>
                         <div className="flex items-center gap-1.5">
                           <Badge variant="outline" className={shortageBadgeClasses[riskClass]}>
-                            {riskClass === "None" ? "Safe" : riskClass}
+                            {shortageLabel[riskClass]}
                           </Badge>
                           {predictedDays !== null && predictedDays <= 7 && (
                             <span className="text-xs text-muted-foreground">

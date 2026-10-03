@@ -97,6 +97,10 @@ interface UpdateStockInput {
   medicineId: string;
   medicineName: string;
   stockId: string | null; // null => creating a new stock row for this pharmacy
+  // Current quantity before this update, so a decrease can be recorded as a
+  // real sale. null for a brand-new stock row, where there's nothing to
+  // compare against (adding initial stock is not a sale).
+  previousQuantity: number | null;
   quantity: number;
   reorderLevel: number;
 }
@@ -138,7 +142,24 @@ export function useUpdateStock(pharmacyId: string | null) {
         if (error) throw error;
       }
 
-      // 2. Recalculate the shortage prediction from recent sales history.
+      // 2. A lower quantity than before means units left the shelf — record
+      // that as a real sale. Nothing here fabricates data: a restock
+      // (quantity went up or stayed the same) never creates a sales row,
+      // and a brand-new stock row (no previousQuantity to compare against)
+      // never does either. record_sale() accumulates with any sale already
+      // recorded today for this medicine, atomically, in the database.
+      const soldQuantity =
+        input.previousQuantity !== null ? input.previousQuantity - input.quantity : 0;
+      if (soldQuantity > 0) {
+        const { error: saleError } = await supabase.rpc("record_sale", {
+          p_pharmacy_id: input.pharmacyId,
+          p_medicine_id: input.medicineId,
+          p_quantity: soldQuantity,
+        });
+        if (saleError) throw saleError;
+      }
+
+      // 3. Recalculate the shortage prediction from recent sales history.
       const avgSales = await averageDailySales(input.pharmacyId, input.medicineId);
       const result = classifyShortage(input.quantity, avgSales);
       const message = shortageMessage(input.medicineName, result);
@@ -165,7 +186,7 @@ export function useUpdateStock(pharmacyId: string | null) {
       });
       if (insertError) throw insertError;
 
-      // 3. Raise an alert for Medium/High risk, if one wasn't already raised today.
+      // 4. Raise an alert for Medium/High risk, if one wasn't already raised today.
       if (result.shortageClass === "Medium" || result.shortageClass === "High") {
         const startOfToday = `${today}T00:00:00.000Z`;
         const { data: existingAlerts, error: alertLookupError } = await supabase
@@ -196,6 +217,9 @@ export function useUpdateStock(pharmacyId: string | null) {
       queryClient.invalidateQueries({ queryKey: ["stock", pharmacyId] });
       queryClient.invalidateQueries({ queryKey: ["predictions", pharmacyId] });
       queryClient.invalidateQueries({ queryKey: ["alerts", pharmacyId] });
+      // Partial key match: refreshes the trend dialog for every medicine of
+      // this pharmacy, not just the one just updated.
+      queryClient.invalidateQueries({ queryKey: ["sales-trend", pharmacyId] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to update stock");

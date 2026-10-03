@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { classifyShortage, shortageMessage, shortageBadgeClasses, type ShortageClass } from "@/lib/shortage";
+import { classifyShortage, shortageMessage, shortageBadgeClasses, shortageLabel, type ShortageClass } from "@/lib/shortage";
 import type { StockWithMedicine, PredictionRow } from "@/hooks/usePharmacyDashboard";
 import { Brain, CheckCircle2, AlertTriangle } from "lucide-react";
  
@@ -149,7 +149,7 @@ export function RunPredictionDialog({
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">{r.days}d</span>
                   <Badge variant="outline" className={shortageBadgeClasses[r.class]}>
-                    {r.class === "None" ? "Safe" : r.class}
+                    {shortageLabel[r.class]}
                   </Badge>
                 </div>
               </div>
@@ -181,4 +181,3 @@ export function RunPredictionDialog({
     </Dialog>
   );
 }
- 

@@ -53,9 +53,21 @@ export function shortageMessage(medicineName: string, result: ShortageResult): s
   return `${medicineName} — Stock level is healthy`;
 }
 
+// 4 visually distinct levels — Low Risk previously reused Safe's green and
+// was indistinguishable from it. Low now uses the theme's existing
+// "secondary" tone (already used elsewhere in the app) instead of a new color.
 export const shortageBadgeClasses: Record<ShortageClass, string> = {
   None: "bg-status-ok-soft text-status-ok-foreground",
-  Low: "bg-status-ok-soft text-status-ok-foreground",
+  Low: "bg-secondary text-secondary-foreground",
   Medium: "bg-status-warn-soft text-status-warn-foreground",
   High: "bg-status-critical-soft text-status-critical-foreground",
+};
+
+// Single source of truth for the 4-level label text, used everywhere a
+// shortage/risk class is shown to the pharmacy owner.
+export const shortageLabel: Record<ShortageClass, string> = {
+  None: "Safe",
+  Low: "Low Risk",
+  Medium: "Medium Risk",
+  High: "High Risk",
 };

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { flushPendingPharmacy } from "@/lib/pharmacy-signup";
 
 function NotFoundComponent() {
   return (
@@ -156,6 +157,10 @@ function RootComponent() {
             return;
           }
           if (currentPath === "/" || currentPath === "/auth") {
+            // Finish a pharmacy signup that was paused for email confirmation —
+            // no-ops for patients or pharmacy owners who are already linked.
+            await flushPendingPharmacy(session.user.id);
+
             const { data: profile } = await supabase
               .from("profiles")
               .select("role")
