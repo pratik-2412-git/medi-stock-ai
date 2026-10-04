@@ -4,3 +4,5 @@ pages_build_output_dir = ".output/public"
 [vars]
 VITE_SUPABASE_URL = "https://vhlmvntofqgyitdddpdn.supabase.co"
 SUPABASE_URL = "https://vhlmvntofqgyitdddpdn.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_welawMUf1qcjZlGsho3oTg_nAgx7e50"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_welawMUf1qcjZlGsho3oTg_nAgx7e50"
