@@ -31,13 +31,15 @@ function PatientDashboard() {
   const {
     searchQuery,
     setSearchQuery,
+    userLocation,
     searchOrigin,
+    locationMethod,
     pincode,
     setPincode,
     filterInStock,
     setFilterInStock,
-    filterLowRisk,
-    setFilterLowRisk,
+    filterLowStock,
+    setFilterLowStock,
     locationError,
     isGettingLocation,
     allMedicines,
@@ -105,9 +107,10 @@ function PatientDashboard() {
           onPincodeChange={setPincode}
           filterInStock={filterInStock}
           onFilterInStockChange={setFilterInStock}
-          filterLowRisk={filterLowRisk}
-          onFilterLowRiskChange={setFilterLowRisk}
-          userLocation={searchOrigin}
+          filterLowStock={filterLowStock}
+          onFilterLowStockChange={setFilterLowStock}
+          userLocation={userLocation}
+          locationMethod={locationMethod}
           onGetLocation={getLocation}
           isGettingLocation={isGettingLocation}
           locationError={locationError}

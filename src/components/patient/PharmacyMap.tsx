@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { PharmacyResult } from "@/hooks/useMedicineSearch";
+import { classifyStockLevel } from "@/lib/stock-thresholds";
 
 interface PharmacyMapProps {
   results: PharmacyResult[];
@@ -9,8 +10,9 @@ interface PharmacyMapProps {
 }
 
 function getMarkerColor(result: PharmacyResult): string {
-  if (result.quantity === 0) return "#ef4444";
-  if (result.shortageClass === "High" || result.shortageClass === "Medium") return "#f59e0b";
+  const level = classifyStockLevel(result.quantity);
+  if (level === "out") return "#ef4444";
+  if (level === "low") return "#f59e0b";
   return "#22c55e";
 }
 
@@ -110,10 +112,11 @@ export function PharmacyMap({
             iconAnchor: [11, 11],
           });
 
+          const level = classifyStockLevel(r.quantity);
           const stockLabel =
-            r.quantity === 0
+            level === "out"
               ? "Out of Stock"
-              : r.shortageClass === "High" || r.shortageClass === "Medium"
+              : level === "low"
                 ? `Low Stock (${r.quantity} units)`
                 : `In Stock (${r.quantity} units)`;
 
@@ -176,9 +179,9 @@ export function PharmacyMap({
     <div className="relative w-full overflow-hidden rounded-xl border">
       <div ref={mapRef} className="h-[400px] w-full" />
       <div className="absolute bottom-3 left-3 flex flex-col gap-1.5 rounded-lg border bg-white/90 p-2 text-xs shadow-soft backdrop-blur dark:bg-card/90">
-        <LegendItem color="#22c55e" label="Good stock, low risk" />
-        <LegendItem color="#f59e0b" label="Low stock or medium risk" />
-        <LegendItem color="#ef4444" label="Out of stock or high risk" />
+        <LegendItem color="#22c55e" label="In Stock (6+ units)" />
+        <LegendItem color="#f59e0b" label="Low Stock (1–5 units)" />
+        <LegendItem color="#ef4444" label="Out of Stock" />
         <LegendItem color="#3b82f6" label="Your location" />
       </div>
     </div>

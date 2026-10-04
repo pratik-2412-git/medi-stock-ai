@@ -11,9 +11,10 @@ interface MedicineSearchBarProps {
   onPincodeChange: (v: string) => void;
   filterInStock: boolean;
   onFilterInStockChange: (v: boolean) => void;
-  filterLowRisk: boolean;
-  onFilterLowRiskChange: (v: boolean) => void;
+  filterLowStock: boolean;
+  onFilterLowStockChange: (v: boolean) => void;
   userLocation: { lat: number; lng: number } | null;
+  locationMethod: "gps" | "pincode" | null;
   onGetLocation: () => void;
   isGettingLocation: boolean;
   locationError: string | null;
@@ -28,8 +29,8 @@ export function MedicineSearchBar({
   searchQuery, onSearchQueryChange,
   pincode, onPincodeChange,
   filterInStock, onFilterInStockChange,
-  filterLowRisk, onFilterLowRiskChange,
-  userLocation, onGetLocation, isGettingLocation, locationError,
+  filterLowStock, onFilterLowStockChange,
+  userLocation, locationMethod, onGetLocation, isGettingLocation, locationError,
   allMedicines, onSearch, onReset, submitted, isSearching,
 }: MedicineSearchBarProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -123,22 +124,26 @@ export function MedicineSearchBar({
               ) : (
                 <MapPin className="size-3.5 mr-1" />
               )}
-              {userLocation ? "Location set ✓" : isGettingLocation ? "Locating..." : "Use My Location"}
+              {locationMethod === "gps"
+                ? "Location set ✓"
+                : isGettingLocation
+                  ? "Locating..."
+                  : "Use My Location"}
             </Button>
           </div>
           {locationError && (
             <p className="mt-1 text-xs text-status-critical-foreground">{locationError}</p>
           )}
-          {userLocation && (
+          {locationMethod === "gps" && userLocation && (
             <p className="mt-1 text-xs text-status-ok-foreground">
-              ✓ Location detected ({userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)})
+              ✓ Using this location ({userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)})
             </p>
           )}
         </div>
  
         <div>
           <Label htmlFor="pincode" className="text-sm font-medium text-foreground">
-            Pincode / Area <span className="text-muted-foreground font-normal">(optional)</span>
+            Pincode / Area
           </Label>
           <Input
             id="pincode"
@@ -148,6 +153,9 @@ export function MedicineSearchBar({
             onChange={(e) => onPincodeChange(e.target.value)}
             maxLength={6}
           />
+          {locationMethod === "pincode" && pincode.trim() && (
+            <p className="mt-1 text-xs text-status-ok-foreground">✓ Using this pincode</p>
+          )}
         </div>
       </div>
  
@@ -160,9 +168,9 @@ export function MedicineSearchBar({
           label="In Stock Only"
         />
         <FilterChip
-          active={filterLowRisk}
-          onClick={() => onFilterLowRiskChange(!filterLowRisk)}
-          label="Low Risk Only"
+          active={filterLowStock}
+          onClick={() => onFilterLowStockChange(!filterLowStock)}
+          label="Low Stock Only"
         />
       </div>
  

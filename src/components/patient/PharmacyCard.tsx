@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PharmacyResult } from "@/hooks/useMedicineSearch";
-import type { ShortageClass } from "@/lib/shortage";
+import { classifyStockLevel, type StockLevel } from "@/lib/stock-thresholds";
 
-type StockStatus = "safe" | "low" | "out";
-
-const stockStatusConfig: Record<StockStatus, { label: string; class: string; dot: string }> = {
-  safe: {
+const stockStatusConfig: Record<StockLevel, { label: string; class: string; dot: string }> = {
+  normal: {
     label: "In Stock",
     class: "bg-status-ok-soft text-status-ok-foreground border-status-ok",
     dot: "bg-status-ok",
@@ -25,12 +23,6 @@ const stockStatusConfig: Record<StockStatus, { label: string; class: string; dot
     dot: "bg-status-critical",
   },
 };
-
-function getStockStatus(shortageClass: ShortageClass, quantity: number): StockStatus {
-  if (quantity === 0) return "out";
-  if (shortageClass === "High" || shortageClass === "Medium") return "low";
-  return "safe";
-}
 
 function formatTime(t: string | null): string {
   if (!t) return "—";
@@ -48,7 +40,7 @@ interface PharmacyCardProps {
 
 export function PharmacyCard({ result, isSelected, onClick }: PharmacyCardProps) {
   const [notified, setNotified] = useState(false);
-  const status = getStockStatus(result.shortageClass, result.quantity);
+  const status = classifyStockLevel(result.quantity);
   const cfg = stockStatusConfig[status];
 
   const handleDirections = (e: React.MouseEvent) => {

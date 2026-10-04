@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ShortageClass } from "@/lib/shortage";
 import { geocodePincode, type GeoPoint } from "@/lib/geocode";
+import { classifyStockLevel } from "@/lib/stock-thresholds";
 
 export type { ShortageClass };
 
@@ -44,23 +45,45 @@ function toShortageClass(value: string | null | undefined): ShortageClass {
   return "None";
 }
 
+// Which location source the patient has explicitly chosen. Exactly one of
+// these is authoritative at a time — never a silent "GPS wins if both are
+// present" fallback. Search, distance, map, and results all key off this.
+export type LocationMethod = "gps" | "pincode" | null;
+
 export function useMedicineSearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
-  const [pincode, setPincode] = useState("");
-  // Resolved from the pincode via geocoding when no browser location is set.
+  const [pincode, setPincodeRaw] = useState("");
+  // Resolved from the pincode via geocoding when pincode is the active method.
   const [pincodeLocation, setPincodeLocation] = useState<GeoPoint | null>(null);
+  const [locationMethod, setLocationMethod] = useState<LocationMethod>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [filterInStock, setFilterInStock] = useState(false);
-  const [filterLowRisk, setFilterLowRisk] = useState(false);
+  const [filterLowStock, setFilterLowStock] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Typing a pincode selects the pincode method; clearing it while pincode
+  // was the active method deselects it again (back to "nothing selected",
+  // not a silent revert to GPS). GPS selection happens explicitly in
+  // getLocation() below.
+  const setPincode = (value: string) => {
+    setPincodeRaw(value);
+    if (value.trim()) {
+      setLocationMethod("pincode");
+    } else if (locationMethod === "pincode") {
+      setLocationMethod(null);
+      setPincodeLocation(null);
+    }
+  };
+
   // The point actually used for distance/radius calculations and for
-  // centering the map: live GPS location takes priority, falling back to
-  // the pincode's geocoded coordinates.
-  const searchOrigin: GeoPoint | null = userLocation ?? pincodeLocation;
+  // centering the map: strictly whichever method the patient selected —
+  // never an automatic GPS-over-pincode fallback. If neither (or the
+  // selected method hasn't resolved to coordinates yet), this is null.
+  const searchOrigin: GeoPoint | null =
+    locationMethod === "gps" ? userLocation : locationMethod === "pincode" ? pincodeLocation : null;
 
   // Fetch all medicines for autocomplete
   const { data: allMedicines } = useQuery({
@@ -80,8 +103,9 @@ export function useMedicineSearch() {
       userLocation,
       pincodeLocation,
       pincode,
+      locationMethod,
       filterInStock,
-      filterLowRisk,
+      filterLowStock,
     ],
     enabled: submitted && searchQuery.trim().length > 1 && !isGeocoding,
     queryFn: async (): Promise<PharmacyResult[]> => {
@@ -136,7 +160,10 @@ export function useMedicineSearch() {
         });
       }
 
-      const origin = userLocation ?? pincodeLocation;
+      // Mirrors searchOrigin exactly — the selected method is the single
+      // source of truth for distance, map centering, and result filtering.
+      const origin: GeoPoint | null =
+        locationMethod === "gps" ? userLocation : locationMethod === "pincode" ? pincodeLocation : null;
 
       let results: PharmacyResult[] = stockRows
         .filter((r) => r.pharmacies)
@@ -175,10 +202,12 @@ export function useMedicineSearch() {
         // A real lat/lng reference point exists (GPS or geocoded pincode):
         // enforce the 10km radius as the source of truth.
         results = results.filter((r) => r.distance === null || r.distance <= SEARCH_RADIUS_KM);
-      } else if (pincode.trim()) {
-        // Geocoding failed / unavailable but a pincode was entered — fall
-        // back to an exact pincode match so the search still narrows down
-        // rather than silently ignoring the pincode.
+      } else if (locationMethod === "pincode" && pincode.trim()) {
+        // Geocoding failed / unavailable but pincode is the selected
+        // method — fall back to an exact pincode match so the search still
+        // narrows down rather than silently ignoring it. Only applies in
+        // pincode mode: stale pincode text left over while GPS is the
+        // active method must never affect results.
         const { data: pincodePharms } = await supabase
           .from("pharmacies")
           .select("id")
@@ -187,10 +216,15 @@ export function useMedicineSearch() {
         results = results.filter((r) => pincodeIds.has(r.pharmacyId));
       }
 
-      // Apply UI filters
-      if (filterInStock) results = results.filter((r) => r.quantity > 0);
-      if (filterLowRisk)
-        results = results.filter((r) => r.shortageClass === "None" || r.shortageClass === "Low");
+      // Apply UI filters — both read the same shared quantity formula used
+      // everywhere else (stock-thresholds.ts): "In Stock Only" means
+      // quantity > 5 units; "Low Stock Only" means 1-5 units.
+      if (filterInStock) {
+        results = results.filter((r) => classifyStockLevel(r.quantity) === "normal");
+      }
+      if (filterLowStock) {
+        results = results.filter((r) => classifyStockLevel(r.quantity) === "low");
+      }
 
       // Sort by distance, then by stock
       results.sort((a, b) => {
@@ -214,7 +248,10 @@ export function useMedicineSearch() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        // Browser GPS takes priority over a pincode-derived point.
+        // Explicitly selecting "Use My Location" makes GPS the active
+        // method — any previously selected pincode is deselected, not
+        // merged or raced against.
+        setLocationMethod("gps");
         setPincodeLocation(null);
         setIsGettingLocation(false);
       },
@@ -228,17 +265,33 @@ export function useMedicineSearch() {
   };
 
   const handleSearch = async () => {
-    // Resolve the pincode to real coordinates so the 10km radius can be
-    // calculated against it, same as browser geolocation. Only needed when
-    // the patient hasn't already shared their live location.
-    if (!userLocation && pincode.trim()) {
+    // A location method must be explicitly selected before searching —
+    // either "Use My Location" or a pincode/area, never both implicitly.
+    if (!locationMethod) {
+      setLocationError('Choose a location first — tap "Use My Location" or enter a pincode/area.');
+      return;
+    }
+
+    if (locationMethod === "gps") {
+      if (!userLocation) {
+        setLocationError('Location not detected yet. Tap "Use My Location" and allow access.');
+        return;
+      }
+    } else {
+      // locationMethod === "pincode"
+      if (!pincode.trim()) {
+        setLocationError("Enter a pincode or area to search.");
+        return;
+      }
+      // Resolve the pincode to real coordinates so the 10km radius can be
+      // calculated against it, completely independent of any GPS location.
       setIsGeocoding(true);
       const resolved = await geocodePincode(pincode);
       setPincodeLocation(resolved);
       setIsGeocoding(false);
-    } else if (!pincode.trim()) {
-      setPincodeLocation(null);
     }
+
+    setLocationError(null);
     setSubmitted(true);
   };
 
@@ -252,12 +305,13 @@ export function useMedicineSearch() {
     setSearchQuery,
     userLocation,
     searchOrigin,
+    locationMethod,
     pincode,
     setPincode,
     filterInStock,
     setFilterInStock,
-    filterLowRisk,
-    setFilterLowRisk,
+    filterLowStock,
+    setFilterLowStock,
     locationError,
     isGettingLocation,
     allMedicines,
