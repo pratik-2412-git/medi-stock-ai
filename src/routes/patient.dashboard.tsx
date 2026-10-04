@@ -81,7 +81,7 @@ function PatientDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur px-5 py-4">
+      <header className="sticky top-0 z-30 border-b border-border bg-secondary/45 px-5 py-4 backdrop-blur dark:bg-secondary/15">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div>
             <h1 className="text-base font-bold text-foreground">

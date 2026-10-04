@@ -197,4 +197,3 @@ function FilterChip({ active, onClick, label }: { active: boolean; onClick: () =
     </button>
   );
 }
- 

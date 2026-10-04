@@ -1,13 +1,14 @@
 /**
- * Shared stock-level classification used across the pharmacy dashboard
- * (summary cards, inventory table). Change this one value to retune what
- * counts as "low stock" everywhere it's used.
+ * Shared stock-level classification used everywhere a plain quantity-based
+ * stock status is shown: pharmacy-owner summary cards, and the patient-facing
+ * search (pharmacy result cards, map markers, "In Stock"/"Low Stock" filters).
+ * Change this one value to retune the threshold app-wide.
  *
  *   quantity === 0              -> Out of Stock
  *   0 < quantity <= threshold   -> Low Stock
- *   quantity > threshold        -> Normal
+ *   quantity > threshold        -> In Stock ("normal")
  */
-export const LOW_STOCK_THRESHOLD = 10;
+export const LOW_STOCK_THRESHOLD = 5;
 
 export type StockLevel = "out" | "low" | "normal";
 

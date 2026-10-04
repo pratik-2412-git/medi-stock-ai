@@ -14,7 +14,7 @@ export function DashboardTopBar({ pharmacy }: { pharmacy: Tables<"pharmacies"> }
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-card px-6 py-4">
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-status-ok-soft/45 px-6 py-4 dark:bg-status-ok-soft/15">
       <div>
         <h1 className="text-lg font-bold text-foreground">{pharmacy.name}</h1>
         <p className="text-sm text-muted-foreground">
