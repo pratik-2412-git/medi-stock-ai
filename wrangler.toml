@@ -3,3 +3,4 @@ pages_build_output_dir = ".output/public"
 
 [vars]
 VITE_SUPABASE_URL = "https://vhlmvntofqgyitdddpdn.supabase.co"
+SUPABASE_URL = "https://vhlmvntofqgyitdddpdn.supabase.co"
