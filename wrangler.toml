@@ -1,2 +1,2 @@
-name = "medi-stock-ai"
-pages_build_output_dir = ".output/public"
+name = "medi-stock-ai" 
+pages_build_output_dir = ".output/public" 
