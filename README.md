@@ -13,11 +13,9 @@ MediStock AI helps pharmacies monitor medicine inventory, forecast potential sho
 ### GitHub Repository
 https://github.com/pratik-2412-git/medi-stock-ai
 
-### Supabase Project
-https://vhlmvntofqgyitdddpdn.supabase.co
 
 ### Live Deployment
-Deployed on Cloudflare (production).
+https://medi-stock-ai.pages.dev/.
 
 ---
 
