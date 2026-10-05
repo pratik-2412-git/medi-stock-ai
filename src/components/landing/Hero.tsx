@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Building2, Lock, User } from "lucide-react";
+import { Building2, User } from "lucide-react";
 
 export function Hero() {
   return (
@@ -25,7 +25,7 @@ export function Hero() {
 
         <div className="mt-10">
           <p className="text-sm font-semibold text-muted-foreground">Continue as</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <RoleButton
               to="/auth"
               role="patient"
@@ -40,18 +40,6 @@ export function Hero() {
               label="I'm a Pharmacy Owner"
               hint="Update stock, get alerts"
             />
-            <div
-              aria-disabled="true"
-              className="flex cursor-not-allowed flex-col items-center gap-1 rounded-2xl border border-dashed border-border bg-muted/60 px-4 py-5 text-center opacity-70"
-            >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
-                <Lock className="size-5" />
-              </span>
-              <span className="mt-1 text-sm font-semibold text-muted-foreground">
-                I'm a Central Medical Store Admin
-              </span>
-              <span className="text-xs text-muted-foreground">Coming soon</span>
-            </div>
           </div>
         </div>
       </div>
