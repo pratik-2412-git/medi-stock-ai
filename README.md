@@ -1,10 +1,10 @@
 # MediStock AI
 
-> AI-powered medicine stock monitoring, shortage prediction, pharmacy inventory management, and patient medicine discovery platform.
+> AI-assisted medicine stock monitoring, shortage prediction, pharmacy inventory management, and real-time patient medicine discovery platform.
 
-Developed as part of **IEMHACKS 4.0 Hackathon**.
+Developed as part of **IEMHACKS 4.0 Hackathon**. Live in production on **Cloudflare**.
 
-MediStock AI is designed to help pharmacies monitor medicine inventory, identify potential shortages, manage alerts, and help patients locate nearby pharmacies where required medicines may be available.
+MediStock AI helps pharmacies monitor medicine inventory, forecast potential shortages, and manage stock alerts — while helping patients instantly locate nearby pharmacies that actually have the medicine they need in stock, right now.
 
 ---
 
@@ -16,31 +16,34 @@ https://github.com/pratik-2412-git/medi-stock-ai
 ### Supabase Project
 https://vhlmvntofqgyitdddpdn.supabase.co
 
+### Live Deployment
+Deployed on Cloudflare (production).
+
 ---
 
 ## 🎯 Problem Statement
 
-Medicine shortages can create serious difficulties for both pharmacies and patients.
+Medicine shortages create real difficulty for both pharmacies and patients.
 
 Pharmacy owners need a way to:
 
-- Monitor medicine inventory.
-- Identify medicines approaching shortage.
-- Track stock and reorder levels.
-- Receive shortage alerts.
+- Monitor medicine inventory in real time.
+- Identify medicines approaching shortage *before* they run out.
+- Track stock against reorder levels.
+- Receive actionable shortage alerts.
 - Analyze medicine sales trends.
-- Predict potential shortages.
+- Forecast potential shortages using actual sales velocity, not guesswork.
 
 Patients need a simple way to:
 
-- Search for medicines.
-- Find nearby pharmacies.
-- Check medicine availability.
-- Identify pharmacies with low-risk/in-stock medicines.
-- View pharmacy locations on a map.
-- Get directions and contact information.
+- Search for a medicine by name.
+- Find nearby pharmacies that actually carry it.
+- See real stock levels — not just "available" or "unavailable."
+- Choose how "nearby" is measured: live GPS location *or* a pincode/area.
+- View pharmacies on an interactive map.
+- Get directions and contact a pharmacy directly.
 
-MediStock AI brings these capabilities together in a single platform.
+MediStock AI brings both sides of this problem into a single platform, backed by a live, shared Supabase database — so when a pharmacy owner updates stock, patients see it immediately.
 
 ---
 
@@ -50,21 +53,21 @@ MediStock AI brings these capabilities together in a single platform.
 
 Patients can:
 
-- Sign up and log in using email authentication.
-- Search for medicines.
-- Get medicine autocomplete suggestions.
-- Filter pharmacies by:
-  - In-stock medicines
-  - Low-risk medicines
-  - Pincode/area
-- Use their current location.
-- Find pharmacies within the relevant search radius.
-- View pharmacy stock status.
-- View pharmacy distance.
-- Call pharmacies.
-- Get directions through Google Maps.
-- View pharmacies on an interactive map.
-- Request notification when an unavailable medicine becomes available.
+- Sign up and log in with Supabase email authentication (with full email verification).
+- Reset a forgotten password through a secure Supabase Auth recovery flow.
+- Search for medicines with live autocomplete suggestions.
+- Choose **exactly one** location method before searching:
+  - **Use My Location** — live browser GPS, or
+  - **Pincode / Area** — geocoded to real coordinates via OpenStreetMap.
+  - The two are mutually exclusive by design — whichever is selected is clearly indicated in the UI, and the other is ignored. No silent fallback between them.
+- Search pharmacies within a strict **10 km radius** of the selected location, calculated with real Haversine distance math (not a database proximity guess).
+- Filter results:
+  - **In Stock Only** — quantity > 5 units
+  - **Low Stock Only** — quantity between 1–5 units
+- View live, pharmacy-reported stock status: **In Stock / Low Stock / Out of Stock** — calculated consistently from the same quantity formula everywhere it appears (cards, map, filters, summaries).
+- View pharmacies on an interactive **Leaflet + OpenStreetMap** map with colour-coded markers (green/amber/red matching stock status), auto-fit bounds, and a legend.
+- Call a pharmacy or get turn-by-turn directions via Google Maps.
+- Request a notification when an out-of-stock medicine becomes available.
 
 ---
 
@@ -72,74 +75,69 @@ Patients can:
 
 Pharmacy owners can:
 
-- Register/login using Supabase Authentication.
-- Complete pharmacy onboarding.
-- View inventory.
-- Add medicines to stock.
-- Update stock quantities.
-- Set reorder levels.
-- View stock status.
-- View medicine sales trends.
-- Run shortage predictions.
-- View shortage-risk information.
-- Receive stock alerts.
-- Mark alerts as read/dismiss alerts.
-- Monitor medicines that are low or out of stock.
+- Register and log in using Supabase Authentication, with a complete pharmacy-onboarding flow that captures address, pincode, **and precise latitude/longitude** — this is what makes a pharmacy discoverable in patient search the moment it's created.
+- View and manage their full medicine inventory.
+- Add new medicines to stock and update existing quantities and reorder levels through an **Update Stock** dialog.
+- View a 30-day sales trend chart per medicine (**View Trend**).
+- Run AI-assisted shortage prediction on demand (**Run Prediction**) — classifies each medicine's shortage risk from actual recent sales velocity, not just current quantity.
+- View shortage-risk badges (Safe / Low / Medium / High) generated by the prediction engine.
+- Receive and review stock alerts (low-stock, high-risk, out-of-stock), mark them as read, and dismiss them.
+- See summary cards (total tracked, low stock, high risk, last updated) with live loading/empty states.
+
+---
+
+## 📦 Stock Status: One Formula, Everywhere
+
+Stock status is calculated from the pharmacy's actual Supabase inventory `quantity` — never hardcoded, never pharmacy- or medicine-specific — using a single shared formula (`src/lib/stock-thresholds.ts`):
+
+| Quantity | Status |
+|---|---|
+| `0` | Out of Stock |
+| `1 – 5` | Low Stock |
+| `> 5` | In Stock |
+
+This exact formula drives pharmacy result cards, map marker colours, the "In Stock Only" / "Low Stock Only" filters, and the pharmacy dashboard's summary cards — so a medicine never shows conflicting status in two different places.
+
+This is intentionally kept separate from **shortage risk** (Safe/Low/Medium/High), which is a different, predictive concept: shortage risk forecasts how soon a medicine *will* run out based on recent sales velocity, even if current stock still looks healthy today.
 
 ---
 
 ## 🤖 AI / Shortage Prediction
 
-MediStock AI provides shortage-risk analysis based on medicine inventory and sales-related information.
-
 The pharmacy dashboard can:
 
-1. Monitor current medicine stock.
-2. Compare stock against reorder levels.
-3. Analyze medicine sales trends.
-4. Run shortage prediction.
-5. Store prediction results.
-6. Generate alerts when shortage risk is detected.
+1. Monitor current medicine stock against reorder levels.
+2. Analyze recent (14-day) sales velocity per medicine.
+3. Run shortage prediction on demand, estimating days-of-stock-remaining.
+4. Store prediction results in Supabase.
+5. Automatically generate alerts when a medicine crosses into Medium or High shortage risk.
 
-Prediction results can be represented through shortage-risk categories such as:
-
-- Safe
-- Low
-- Medium
-- High
-- Critical
+Shortage-risk categories: **Safe · Low · Medium · High**.
 
 ---
 
 ## 🗺️ Medicine Search & Pharmacy Map
 
-The patient dashboard supports location-based medicine discovery.
+The patient dashboard's location-based search is built end-to-end on real geolocation, not approximations:
 
-The system can:
-
-- Detect the user's location through the browser Geolocation API.
-- Search pharmacies based on medicine availability.
-- Calculate distance between the user and pharmacies.
-- Filter results by location.
-- Display pharmacy results using cards.
-- Display pharmacies on a Leaflet/OpenStreetMap-based map.
-- Show stock status through map markers.
-- Provide directions through Google Maps.
+- **GPS mode** — uses the browser Geolocation API directly.
+- **Pincode mode** — the entered pincode is geocoded to real latitude/longitude via the free **OpenStreetMap Nominatim API** (no paid Google Maps key required), then the same 10 km Haversine radius search runs against it. If geocoding is ever unavailable, the search falls back to an exact pincode match rather than failing silently.
+- Whichever method is selected drives *everything* downstream — distance shown on cards, map centering, and which pharmacies appear in results — with no mixing between the two.
+- Searching without selecting a location method is blocked with a clear validation message.
+- Pharmacies that are completely out of stock for a searched medicine still appear in results (marked Out of Stock) rather than silently disappearing — so a patient always sees the full picture of what's nearby.
 
 ---
 
 ## 🔐 Authentication
 
-MediStock AI uses **Supabase Authentication**.
+MediStock AI uses **Supabase Authentication** end-to-end — no manually managed user table.
 
-Authentication is handled through Supabase Auth rather than manually creating users inside the authentication database.
-
-The application supports role-based access for:
+Supports role-based access for:
 
 - Patient
 - Pharmacy Owner
 
-The user's profile is associated with the authenticated Supabase user and determines the appropriate dashboard.
+A user's profile row (linked to their Supabase Auth user) determines their role and routes them to the correct dashboard automatically.
 
 ### Authentication Flow
 
@@ -159,3 +157,64 @@ Role-based Dashboard
 Patient Dashboard
        OR
 Pharmacy Owner Dashboard
+```
+
+### Forgot Password Flow
+
+```text
+Patient clicks "Forgot Password"
+     ↓
+Enters registered email
+     ↓
+Supabase sends password-reset email
+     ↓
+Patient opens reset link
+     ↓
+Sets a new password
+     ↓
+Explicitly signed out (no silent auto-login)
+     ↓
+Redirected to Login
+     ↓
+Logs in manually with new password
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React, TypeScript, TanStack Start/Router, TanStack Query |
+| UI | shadcn/ui, Radix primitives, Tailwind CSS |
+| Charts | Recharts |
+| Maps | Leaflet + OpenStreetMap tiles |
+| Geocoding | OpenStreetMap Nominatim (free, no API key) |
+| Backend & Auth | Supabase (Postgres, Row-Level Security, Auth) |
+| Notifications | Sonner (toasts) |
+| Deployment | Cloudflare |
+
+---
+
+## 🧪 Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start the dev server
+npm run dev
+
+# Type-check
+npx tsc --noEmit
+
+# Lint
+npm run lint
+
+# Production build
+npm run build
+```
+
+Requires Supabase project credentials configured as environment variables for the app to connect to the database and Auth service.
+
+---
